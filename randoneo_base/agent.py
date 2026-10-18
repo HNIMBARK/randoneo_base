@@ -11,6 +11,7 @@ from langchain.chat_models import init_chat_model
 from langchain_core.tools import tool
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langgraph.types import interrupt
+from dotenv import load_dotenv
 
 MODEL = "claude-haiku-4-5"
 DB = "randoneo_memory.sqlite"
@@ -44,6 +45,7 @@ SYSTEM_PROMPT = f"{ROLE}\n\n{INTERNAL_RULES}"
 # Le SDK MCP ne transmet qu'une liste blanche (PATH, HOME, USER…) — une clé d'API
 # doit donc être passée explicitement, sinon le serveur meurt au démarrage et le
 # client ne voit qu'un « Connection closed » opaque.
+load_dotenv()
 mcp_client = MultiServerMCPClient({
     "randoneo": {
         "command": sys.executable,

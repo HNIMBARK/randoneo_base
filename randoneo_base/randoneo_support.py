@@ -69,7 +69,7 @@ def get_order_status(order_id: str) -> dict:
                 fiche["tracking_url"] = TRACKING_URL.format(fiche["tracking_number"])
             return fiche
     return {"erreur": f"Commande « {order_id} » introuvable. Vérifiez le format RND-XXXXX."}
-
+    
 
 @mcp.tool
 def search_knowledge_base(query: str) -> list[str]:
