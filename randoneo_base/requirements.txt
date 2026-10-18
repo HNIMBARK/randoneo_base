@@ -1,14 +1,15 @@
 # Projet Agent — assistant de support Randoneo outillé par MCP
-fastmcp
-mcp
+fastmcp<4
+mcp>=1.12
 langchain
 langchain-core
 langchain-anthropic
 langgraph
 langgraph-checkpoint-sqlite
-langchain-mcp-adapters
+langchain-mcp-adapters>=0.1.12
 chromadb
 openai
 python-dotenv
 streamlit
 langchain-openai
+
