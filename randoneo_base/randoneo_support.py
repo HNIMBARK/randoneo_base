@@ -7,18 +7,27 @@ En HTTP : mcp.run(transport="http", host="127.0.0.1", port=8000)
 import json
 import os
 from pathlib import Path
-
+from dotenv import load_dotenv
 import chromadb
 from chromadb.utils import embedding_functions
 from fastmcp import FastMCP
 
 mcp = FastMCP("randoneo-support")
-
+load_dotenv()
 DATA = Path(__file__).with_name("data")
 CATALOG = json.loads((DATA / "catalog.json").read_text(encoding="utf-8"))
 ORDERS = json.loads((DATA / "orders.json").read_text(encoding="utf-8"))
 CORPUS = json.loads((DATA / "randoneo_corpus.json").read_text(encoding="utf-8"))
 TICKETS = []
+CUSTOMER_ID = os.environ.get("RANDO_CLIENT_ID")
+
+INTENTS = {
+    "return_refund",
+    "payment_issue",
+    "order_tracking",
+    "product_question",
+    "damaged_product"
+}
 
 # Le transporteur choisi par Randoneo : le suivi d'un colis se consulte chez lui.
 TRACKING_URL = "https://suivi.colisdirect.fr/{}"
@@ -63,10 +72,15 @@ def get_order_status(order_id: str) -> dict:
     À utiliser dès qu'un client demande où en est sa commande, ou parle d'un colis.
     """
     for order in ORDERS:
-        if order["order_id"].upper() == order_id.strip().upper():
-            fiche = dict(order)
-            if fiche["tracking_number"]:
-                fiche["tracking_url"] = TRACKING_URL.format(fiche["tracking_number"])
+        if (order["order_id"].upper() == order_id.strip().upper()
+            and CUSTOMER_ID
+            and order.get("customer_id") == CUSTOMER_ID):
+            fiche = {
+                "order_id": order["order_id"],
+                "status": order.get("status")
+                }
+            if order.get("tracking_number"):
+                fiche["tracking_url"] = TRACKING_URL.format(order["tracking_number"])
             return fiche
     return {"erreur": f"Commande « {order_id} » introuvable. Vérifiez le format RND-XXXXX."}
     
@@ -92,6 +106,17 @@ def create_ticket(intent: str, summary: str, order_id: str | None = None) -> str
     order_id : identifiant de la commande concernée, si le client en mentionne une.
     Action sensible : l'agent la soumet à validation avant de l'exécuter.
     """
+    if not CUSTOMER_ID or intent not in INTENTS:
+        return "Erreur : action non autorisée."
+
+    if order_id and not any(
+        o["order_id"] == order_id and o.get("customer_id") == CUSTOMER_ID
+        for o in ORDERS
+    ):
+        return "Erreur : commande introuvable."
+
+    if not summary.strip() or len(summary) > 300:
+        return "Erreur : résumé invalide."
     TICKETS.append({"intent": intent, "summary": summary, "order_id": order_id})
     return f"Ticket TICK-{len(TICKETS):03d} ouvert ({intent})."
 

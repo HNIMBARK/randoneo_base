@@ -67,7 +67,10 @@ async def main():
     config = {"configurable": {"thread_id": thread_id}}
 
     async with AsyncSqliteSaver.from_conn_string(DB) as checkpointer:
-        agent = await build_agent(checkpointer)
+        agent = await build_agent(
+            checkpointer,
+            customer_id="CLIENT-001"
+        )
         print(f"Assistant Randoneo — conversation « {thread_id} ». Ctrl-D pour quitter.\n")
 
         while True:

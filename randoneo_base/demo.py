@@ -34,7 +34,7 @@ async def scenario(agent, titre, question, config, decision=None):
 
 async def main():
     async with AsyncSqliteSaver.from_conn_string(DB_DEMO) as checkpointer:
-        agent = await build_agent(checkpointer)
+        agent = await build_agent(checkpointer, customer_id="CUST-001")
 
         await scenario(agent, "1. Une règle de l'entreprise → base de connaissances",
                        "J'ai combien de temps pour retourner un article ?",
