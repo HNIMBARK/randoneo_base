@@ -10,7 +10,26 @@ from langgraph.types import Command
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 
 from agent import build_agent, DB
-from security import safe_response  
+import re
+from urllib.parse import urlsplit
+
+def safe_response(answer):
+    allowed = {"randoneo.fr", "www.randoneo.fr", "suivi.colisdirect.fr"}
+
+    urls = re.findall(r'https?://[^\s<>"\']+', answer)
+
+    for url in urls:
+        domain = urlsplit(url.rstrip(".,;!?)")).hostname
+        if domain not in allowed:
+            return "Lien non autorisé bloqué."
+
+    if re.search(
+        r"règles internes, strictement confidentielles|avoir.{0,80}40\s*(€|euros)",
+        answer, re.IGNORECASE
+    ):
+        return "Information confidentielle bloquée."
+
+    return answer
 
 load_dotenv()
 
@@ -18,24 +37,10 @@ st.set_page_config(
     page_title="Randoneo Support",
     page_icon="🏔️"
 )
-
-# Secrets locaux et Streamlit Cloud
-for key in (
-    "OPENAI_API_KEY", "ANTHROPIC_API_KEY",
-    "APP_USER_1", "APP_PASSWORD_1", "APP_CLIENT_ID_1",
-    "APP_USER_2", "APP_PASSWORD_2", "APP_CLIENT_ID_2"
-):
-    if key in st.secrets:
-        os.environ[key] = str(st.secrets[key])
-
-
+# Utlisateurs
 USERS = {
-    os.getenv(f"APP_USER_{i}"): (
-        os.getenv(f"APP_PASSWORD_{i}"),
-        os.getenv(f"APP_CLIENT_ID_{i}")
-    )
-    for i in (1, 2)
-    if os.getenv(f"APP_USER_{i}")
+    "client1": ("demo1", "CLIENT-001"),
+    "client2": ("demo2", "CLIENT-002")
 }
 
 
@@ -67,7 +72,7 @@ class AgentService:
         self.checkpointer = await self.context.__aenter__()
         self.agent = await build_agent(
             self.checkpointer,
-            customer_id="CUST-001"
+            customer_id="CLIENT-001"
         )
 
     async def _execute(self, payload, thread_id):
