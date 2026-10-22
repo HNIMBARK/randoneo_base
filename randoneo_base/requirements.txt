@@ -9,4 +9,9 @@ mcp==1.28.0
 openai==2.42.0
 anthropic==0.109.2
 pydantic==2.13.4
+python-dotenv
+langchain-openai
+langgraph-checkpoint-sqlite
+aiosqlite
+
 
